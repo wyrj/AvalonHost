@@ -1,19 +1,4 @@
-enum CHARACTER {
-  MERLIN = 'merlin',
-  PERCIVAL = 'percival',
-  MORGANA = 'morgana',
-  MORDRED = 'mordred',
-  OBERON = 'oberon',
-  ASSASSIN = 'assassin'
-};
-
-enum TEAM {
-  ALL = 'all',
-  RED = 'red',
-  BLUE = 'blue'
-}
-
-type ATTENDEE = {[name in CHARACTER]?: boolean};
+import {CHARACTER, TEAM, ATTENDEE} from './define';
 
 function sleep(time: number): Promise<void> {
   return new Promise((resolve) => {
@@ -21,11 +6,11 @@ function sleep(time: number): Promise<void> {
   });
 }
 
-export default class AvalonHost {
+export default class Host {
   private _openInterval: number;
   private _attendee: ATTENDEE;
 
-  constructor(inteval: number) {
+  constructor(inteval?: number) {
     this._openInterval = inteval || 3;
   }
 
@@ -66,7 +51,7 @@ export default class AvalonHost {
     await this.putDownHand([TEAM.RED]);
   }
 
-  private async merlinRound(): void {
+  private async merlinRound(): Promise<void> {
     const mordred = this.hasMordred() ? [CHARACTER.MORDRED] : [];
     await this.raiseHand([TEAM.RED], mordred);
     await this.openEyes([CHARACTER.MERLIN]);
@@ -75,7 +60,7 @@ export default class AvalonHost {
     await this.putDownHand([TEAM.RED]);
   }
 
-  private async percivalRound(): void {
+  private async percivalRound(): Promise<void> {
     await this.raiseHand([CHARACTER.MERLIN, CHARACTER.MORGANA]);
     await this.openEyes([CHARACTER.PERCIVAL]);
     await sleep(this._openInterval);

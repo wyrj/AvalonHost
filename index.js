@@ -1,3 +1,8 @@
-import AvalonHost from './src/AvalonHost';
+import AvalonHost from './src/main';
 
-export {AvalonHost}
+(function() {
+
+const host = new AvalonHost();
+host.render(document.body);
+
+})();
