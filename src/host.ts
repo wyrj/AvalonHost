@@ -1,4 +1,5 @@
-import {CHARACTER, TEAM, ATTENDEE} from './define';
+import {CHARACTER, TEAM, ATTENDEE, OP, ACTION, AUDIO_FILE} from './define';
+import AudioPlayer from './audio';
 
 function sleep(time: number): Promise<void> {
   return new Promise((resolve) => {
@@ -9,9 +10,11 @@ function sleep(time: number): Promise<void> {
 export default class Host {
   private _openInterval: number;
   private _attendee: ATTENDEE;
+  private _player: AudioPlayer;
 
   constructor(inteval?: number) {
     this._openInterval = inteval || 3;
+    this._player = new AudioPlayer();
   }
 
   public async play(attendee: ATTENDEE): Promise<void> {
@@ -69,20 +72,30 @@ export default class Host {
   }
 
   private async openEyes(who: Array<CHARACTER | TEAM>, exception?: Array<CHARACTER>): Promise<void> {
-    const exceptionString = (exception && exception.length) > 0 ? `except ${exception.join(' ')}` : '';
-    console.log(`${who.join(' ')} ${exceptionString} open eyes.`);
+    await this.doAction(who, exception || [], ACTION.OPEN);
   }
 
   private async closeEyes(who: Array<CHARACTER | TEAM>): Promise<void> {
-    console.log(`${who.join(' ')} close eyes.`);
+    await this.doAction(who, [], ACTION.CLOSE);
   }
 
   private async raiseHand(who: Array<CHARACTER | TEAM>, exception?: Array<CHARACTER>): Promise<void> {
-    const exceptionString = (exception && exception.length) > 0 ? `except ${exception.join(' ')}` : '';
-    console.log(`${who.join(' ')} ${exceptionString} raise hand.`);
+    await this.doAction(who, exception || [], ACTION.RAISE);
   }
 
   private async putDownHand(who: Array<CHARACTER | TEAM>): Promise<void> {
-    console.log(`${who.join(' ')} put down hand.`);
+    await this.doAction(who, [], ACTION.PUTDOWN);
+  }
+
+  private async doAction(who: Array<CHARACTER | TEAM>, exception: Array<CHARACTER>, action: ACTION): Promise<void> {
+    const seq: Array<AUDIO_FILE> = [who[0]];
+    for (let i = 1; i < who.length; i++) {
+      seq.push(OP.AND, who[i]);
+    }
+    if (exception.length > 0) {
+      seq.push(OP.EXCEPT, ...exception);
+    }
+    seq.push(action);
+    await this._player.play(seq);
   }
 }
