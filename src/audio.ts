@@ -13,70 +13,48 @@ function loadAudio(src: string): Promise<HTMLAudioElement> {
 
 function playAudio(tag: HTMLAudioElement): Promise<void> {
   return new Promise((resolve) => {
-    tag.addEventListener('ended', () => resolve());
+    tag.addEventListener('pause', () => {
+      resolve();
+    });
     tag.play();
   });
 }
 
+const scripts: Map<AUDIO_FILE, Promise<HTMLAudioElement>> = new Map();
+scripts.set(CHARACTER.MERLIN, loadAudio(CHARACTER.MERLIN));
+scripts.set(CHARACTER.PERCIVAL, loadAudio(CHARACTER.PERCIVAL));
+scripts.set(CHARACTER.MORGANA, loadAudio(CHARACTER.MORGANA));
+scripts.set(CHARACTER.MORDRED, loadAudio(CHARACTER.MORDRED));
+scripts.set(CHARACTER.OBERON, loadAudio(CHARACTER.OBERON));
+scripts.set(TEAM.ALL, loadAudio(TEAM.ALL));
+scripts.set(TEAM.RED, loadAudio(TEAM.RED));
+scripts.set(OP.AND, loadAudio(OP.AND));
+scripts.set(OP.EXCEPT, loadAudio(OP.EXCEPT));
+scripts.set(ACTION.OPEN, loadAudio(ACTION.OPEN));
+scripts.set(ACTION.CLOSE, loadAudio(ACTION.CLOSE));
+scripts.set(ACTION.PUTDOWN, loadAudio(ACTION.PUTDOWN));
+scripts.set(ACTION.RAISE, loadAudio(ACTION.RAISE));
+
 export default class AudioPlayer {
   private _player: HTMLAudioElement;
-  private _scripts: Map<AUDIO_FILE, Promise<HTMLAudioElement>>;
-  private _playing: boolean;
-  private _sequence: Array<AUDIO_FILE>;
 
   constructor() {
     this._player = null;
-    this._scripts = new Map();
-    this._scripts.set(CHARACTER.MERLIN, loadAudio(CHARACTER.MERLIN));
-    this._scripts.set(CHARACTER.PERCIVAL, loadAudio(CHARACTER.PERCIVAL));
-    this._scripts.set(CHARACTER.MORGANA, loadAudio(CHARACTER.MORGANA));
-    this._scripts.set(CHARACTER.MORDRED, loadAudio(CHARACTER.MORDRED));
-    this._scripts.set(CHARACTER.OBERON, loadAudio(CHARACTER.OBERON));
-    this._scripts.set(TEAM.ALL, loadAudio(TEAM.ALL));
-    this._scripts.set(TEAM.RED, loadAudio(TEAM.RED));
-    this._scripts.set(OP.AND, loadAudio(OP.AND));
-    this._scripts.set(OP.EXCEPT, loadAudio(OP.EXCEPT));
-    this._scripts.set(ACTION.OPEN, loadAudio(ACTION.OPEN));
-    this._scripts.set(ACTION.CLOSE, loadAudio(ACTION.CLOSE));
-    this._scripts.set(ACTION.PUTDOWN, loadAudio(ACTION.PUTDOWN));
-    this._scripts.set(ACTION.RAISE, loadAudio(ACTION.RAISE));
-
-    this._playing = false;
-    this._sequence = [];
   }
 
-  public async play(sequence: Array<AUDIO_FILE>): Promise<void> {
-    this._sequence = sequence;
-    this._playing = true;
-    await this._play();
-    this._playing = false;
-  }
-
-  public stop(): void {
-    this._playing = false;
-    if (this._player) {
-      this._player.pause();
-      this._player = null;
-    }
-  }
-
-  private async _play(): Promise<void> {
-    if (this._playing && this._sequence.length > 0) {
-      await this._playOne();
-      await this._play();
-    }
-  }
-
-  private async _playOne(): Promise<void> {
-    const key = this._sequence.shift();
-    const loading = this._scripts.get(key);
-    if (!loading) {
-      return;
-    }
-
-    const tag = await loading;
+  public async play(file: AUDIO_FILE): Promise<void> {
+    const tag = await scripts.get(file);
     this._player = tag;
     await playAudio(tag);
+    this._player = null;
+  }
+
+  public pause(): void {
+    if (!this._player) {
+      return;
+    }
+    this._player.pause();
+    this._player.currentTime = 0;
     this._player = null;
   }
 }

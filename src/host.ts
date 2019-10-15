@@ -11,15 +11,16 @@ export default class Host {
   private _openInterval: number;
   private _attendee: ATTENDEE;
   private _player: AudioPlayer;
+  private _destory: boolean;
 
-  constructor(inteval?: number) {
+  constructor(attendee: ATTENDEE, inteval?: number) {
+    this._attendee = attendee;
     this._openInterval = inteval || 3;
     this._player = new AudioPlayer();
+    this._destory = false;
   }
 
-  public async play(attendee: ATTENDEE): Promise<void> {
-    this._attendee = attendee;
-
+  public async play(): Promise<void> {
     await this.closeEyes([TEAM.ALL]);
     await sleep(1);
     await this.redRound();
@@ -31,6 +32,11 @@ export default class Host {
       await sleep(1);
     }
     await this.openEyes([TEAM.ALL]);
+  }
+
+  public pause(): void {
+    this._player.pause();
+    this._destory = true;
   }
 
   private hasPercival(): boolean {
@@ -96,6 +102,15 @@ export default class Host {
       seq.push(OP.EXCEPT, ...exception);
     }
     seq.push(action);
-    await this._player.play(seq);
+    await this.playAudio(seq);
+  }
+
+  private async playAudio(sequence: Array<AUDIO_FILE>): Promise<void> {
+    if (this._destory || sequence.length === 0) {
+      return;
+    }
+    const file = sequence.shift();
+    await this._player.play(file);
+    await this.playAudio(sequence);
   }
 }
